@@ -1,6 +1,6 @@
 import asyncio
 import aiohttp
-import requests as re
+import requests
 from model import Pages, Links
 import lxml.html as html
 
@@ -20,6 +20,12 @@ def update_links_table(parent_url, current_url):
     Links.add_link(parent_url, current_url)
 
 
+def get_url_list(req):
+    tree = html.fromstring(req.text)
+    subtree = tree.xpath('//div[@id="bodyContent"]')[0]
+    return [i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')]
+
+
 def parse_page(parent_url, depth=1):
     '''
     Get all urls from article ignoring unexisting urls (starts with /w/) and
@@ -28,10 +34,8 @@ def parse_page(parent_url, depth=1):
     :param depth: current parse depth
     :return:
     '''
-    r = re.get(parent_url)
-    tree = html.fromstring(r.text)
-    subtree = tree.xpath('//div[@id="bodyContent"]')[0]
-    url_list = [i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')]
+    request = requests.get(parent_url)
+    url_list = get_url_list(request)
     current_depth = depth + 1
     for url in url_list:
         current_url = MAIN_DOMAIN + url
