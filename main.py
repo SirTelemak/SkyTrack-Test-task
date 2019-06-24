@@ -25,7 +25,7 @@ def get_url_list(req):
     subtree = tree.xpath('//div[@id="bodyContent"]')[0]
     return {i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')}
 
-
+# TODO: remake to async code
 def parse_page(parent_url, depth=1):
     '''
     Get all urls from article ignoring unexisting urls (starts with /w/) and
