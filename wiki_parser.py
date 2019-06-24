@@ -20,8 +20,7 @@ class Parser:
 
     @staticmethod
     def _update_page_table(urls, depth=0):
-        urls_to_add = [url for url in urls if not Pages.select().where(Pages.url == url).exists()]
-        Pages.add_pages(urls_to_add, depth)
+        Pages.add_pages(urls, depth)
 
     @staticmethod
     def _update_links_table(parent_url, urls):
@@ -33,6 +32,10 @@ class Parser:
         return {self.domain + i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')}
 
     async def get_url_content(self, url, failed=False):
+        """
+        Looks like Wiki block requests after some quantity of request, try..except not always helps to solve this,
+        but gives some chances (happens only for depth > 2)
+        """
         try:
             async with self.session.get(url) as resp:
                 return await resp.text()
@@ -45,11 +48,8 @@ class Parser:
 
     async def parse_page(self, parent_url, depth=0):
         """
-        Get all urls from article ignoring unexisting urls (starts with /w/) and
+        Get all urls from article ignoring non-existing articles (starts with /w/) and
         non-article urls (everything not in "div id='bodyContent'")
-        :param parent_url: url to be parsed
-        :param depth: current parse depth
-        :return:
         """
 
         if depth == 0:
