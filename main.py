@@ -23,7 +23,7 @@ def update_links_table(parent_url, current_url):
 def get_url_list(req):
     tree = html.fromstring(req.text)
     subtree = tree.xpath('//div[@id="bodyContent"]')[0]
-    return [i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')]
+    return {i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')}
 
 
 def parse_page(parent_url, depth=1):
@@ -38,8 +38,17 @@ def parse_page(parent_url, depth=1):
     url_list = get_url_list(request)
     current_depth = depth + 1
     for url in url_list:
+        # TODO: do I need all this here or better make additional function
         current_url = MAIN_DOMAIN + url
-        exists = update_page_table(current_url, current_depth)
+        added = update_page_table(current_url, current_depth)
+        print(added)
         update_links_table(parent_url, current_url)
-        if not exists and current_depth != MAX_DEPTH:
+        if added and current_depth < MAX_DEPTH:
+            print(current_depth)
             parse_page(current_url, current_depth)
+
+
+if __name__ == '__main__':
+    base_url = 'https://ru.wikipedia.org/wiki/Carrissoa'
+    Pages.add_page(base_url)
+    parse_page(base_url)

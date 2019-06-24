@@ -34,15 +34,3 @@ class Links(Model):
 
 
 db.create_tables([Pages, Links])
-# Pages.add_page('a', 1)
-# Pages.add_page('b', 2)
-# Pages.add_page('c', 2)
-# Pages.add_page('d', 3)
-# Pages.add_page('e', 3)
-# Pages.add_page('f', 3)
-#
-# Links.add_link('a', 'b')
-# Links.add_link('a', 'c')
-# Links.add_link('b', 'd')
-# Links.add_link('b', 'f')
-# Links.add_link('c', 'e')
