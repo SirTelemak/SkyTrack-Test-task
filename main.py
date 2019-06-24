@@ -7,7 +7,7 @@ from model import Pages, Links
 import lxml.html as html
 
 
-MAX_DEPTH = 4
+MAX_DEPTH = 2
 MAIN_DOMAIN = 'https://ru.wikipedia.org'
 LOGGER_FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=LOGGER_FORMAT, datefmt='[%H:%M:%S]')
@@ -49,7 +49,7 @@ async def parse_page(loop, session, parent_url, depth=1):
     url_list = get_url_list(response)
     current_depth = depth + 1
     tasks = []
-    for url in list(url_list)[:2]:
+    for url in url_list:
         current_url = MAIN_DOMAIN + url
         added = update_page_table(current_url, current_depth)
         update_links_table(parent_url, current_url)
