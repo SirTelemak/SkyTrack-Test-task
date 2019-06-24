@@ -1,16 +1,21 @@
 import asyncio
 import aiohttp
-import requests
+import argparse
+from datetime import datetime
+import logging
 from model import Pages, Links
 import lxml.html as html
 
 
 MAX_DEPTH = 4
 MAIN_DOMAIN = 'https://ru.wikipedia.org'
-loop = asyncio.get_event_loop()
+LOGGER_FORMAT = '%(asctime)s %(message)s'
+logging.basicConfig(format=LOGGER_FORMAT, datefmt='[%H:%M:%S]')
+log = logging.getLogger()
+log.setLevel(logging.INFO)
 
 
-def update_page_table(url, depth):
+def update_page_table(url, depth=1):
     result = Pages.add_page(url, depth)
     if result:
         return True
@@ -20,13 +25,19 @@ def update_links_table(parent_url, current_url):
     Links.add_link(parent_url, current_url)
 
 
-def get_url_list(req):
-    tree = html.fromstring(req.text)
+def get_url_list(resp):
+    tree = html.fromstring(resp)
     subtree = tree.xpath('//div[@id="bodyContent"]')[0]
     return {i for i in subtree.xpath("*//a/@href") if i.startswith('/wiki')}
 
+
+async def fetch(session, url):
+    async with session.get(url) as resp:
+        return await resp.text()
+
+
 # TODO: remake to async code
-def parse_page(parent_url, depth=1):
+async def parse_page(loop, session, parent_url, depth=1):
     '''
     Get all urls from article ignoring unexisting urls (starts with /w/) and
     non-article urls (everything not in "div id='bodyContent'")
@@ -34,21 +45,31 @@ def parse_page(parent_url, depth=1):
     :param depth: current parse depth
     :return:
     '''
-    request = requests.get(parent_url)
-    url_list = get_url_list(request)
+    response = await fetch(session, parent_url)
+    url_list = get_url_list(response)
     current_depth = depth + 1
-    for url in url_list:
-        # TODO: do I need all this here or better make additional function
+    tasks = []
+    for url in list(url_list)[:2]:
         current_url = MAIN_DOMAIN + url
         added = update_page_table(current_url, current_depth)
-        print(added)
         update_links_table(parent_url, current_url)
         if added and current_depth < MAX_DEPTH:
-            print(current_depth)
-            parse_page(current_url, current_depth)
+            tasks.append(parse_page(loop, session, current_url, current_depth))
+    await asyncio.gather(*tasks)
 
 
-if __name__ == '__main__':
+async def main(loop, base_url):
+    async with aiohttp.ClientSession(loop=loop) as session:
+        now = datetime.now()
+        await parse_page(loop, session, base_url)
+        log.info(
+            '> Parsing with depth 4 took {:.2f} seconds'.format(
+                (datetime.now() - now).total_seconds()))
+
+
+if __name__ == "__main__":
     base_url = 'https://ru.wikipedia.org/wiki/Carrissoa'
-    Pages.add_page(base_url)
-    parse_page(base_url)
+    update_page_table(base_url)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main(loop, base_url))
+    loop.close()
