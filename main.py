@@ -1,9 +1,11 @@
-import asyncio
-import aiohttp
 import argparse
-from datetime import datetime
+import asyncio
 import logging
+from datetime import datetime
 
+import aiohttp
+
+from model import create_tables
 from wiki_parser import Parser
 
 LOGGER_FORMAT = '%(filename)s %(asctime)s %(message)s'
@@ -28,6 +30,7 @@ async def main(loop, base_url, max_depth):
 
 if __name__ == "__main__":
     args = arg_parser.parse_args()
+    create_tables()
     base_url = args.url
     max_depth = args.depth
     loop = asyncio.get_event_loop()

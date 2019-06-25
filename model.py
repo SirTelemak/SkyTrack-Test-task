@@ -37,4 +37,6 @@ class Links(Model):
                 cls.insert_many(data_source[idx:idx + 100]).execute()
 
 
-db.create_tables([Pages, Links])
+def create_tables():
+    with db:
+        db.create_tables([Pages, Links])
