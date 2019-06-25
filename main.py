@@ -23,9 +23,7 @@ async def main(loop, base_url, max_depth):
         now = datetime.now()
         parser = Parser(loop, session, max_depth)
         await parser.parse_page(base_url)
-        log.info(
-            'Parsing with depth {} took {:.2f} seconds'.format(
-                max_depth, (datetime.now() - now).total_seconds()))
+        log.info('Parsing with depth {} took {:.2f} seconds'.format(max_depth, (datetime.now() - now).total_seconds()))
 
 
 if __name__ == "__main__":
